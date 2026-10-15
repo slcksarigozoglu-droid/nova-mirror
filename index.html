@@ -32,7 +32,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:0}
 .stage{grid-area:stage;position:relative;min-height:0;border-radius:30px;overflow:hidden;background:#02050d;border:3px solid #fff1da;box-shadow:0 0 0 1px rgba(255,227,189,.5),0 0 28px rgba(255,227,189,.45),inset 0 0 40px rgba(0,0,0,.6)}
 #view{position:absolute;inset:0;width:100%;height:100%;display:block}
 #cam{position:absolute;width:2px;height:2px;opacity:0;pointer-events:none}
-.guide{position:absolute;inset:8% 22%;border:2px solid rgba(143,216,255,.5);border-radius:50%;pointer-events:none;box-shadow:inset 0 0 22px rgba(70,168,255,.22)}
+.guide{display:none!important;position:absolute;inset:8% 22%;border:2px solid rgba(143,216,255,.5);border-radius:50%;pointer-events:none;box-shadow:inset 0 0 22px rgba(70,168,255,.22)}
 .scan{position:absolute;left:12%;right:12%;top:8%;height:3px;background:linear-gradient(90deg,transparent,var(--acc2),transparent);box-shadow:0 0 18px var(--acc2);opacity:0;pointer-events:none}
 .scan.run{animation:scan 1.6s ease-in-out forwards}
 @keyframes scan{0%{top:8%;opacity:1}100%{top:90%;opacity:1}}
@@ -99,6 +99,26 @@ body.mirror{background:#000}
 .attract .tap{color:var(--acc2);letter-spacing:.2em;font-size:13px;text-transform:uppercase}
 @keyframes fade{from{opacity:0}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+
+:root{--gold:#d8b879;--gold2:#f3e2b8}
+.fams{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 10px;scrollbar-width:none}
+.fam{flex:0 0 auto;padding:9px 15px;border-radius:999px;border:1px solid rgba(216,184,121,.28);background:rgba(255,255,255,.03);color:var(--mut);font:500 12px var(--font);letter-spacing:.08em;text-transform:uppercase}
+.fam.on{color:#1a1408;background:linear-gradient(135deg,var(--gold2),var(--gold));border-color:transparent;font-weight:600}
+.cat{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:12px;margin:4px 0 12px}
+.cc{display:flex;flex-direction:column;align-items:center;gap:7px;padding:9px 8px 11px;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.015));border:1px solid rgba(216,184,121,.22);text-align:center}
+.cc b{font:600 12.5px var(--font);letter-spacing:.02em;color:var(--txt);line-height:1.2}
+.cc small{font:500 9.5px var(--font);letter-spacing:.22em;color:var(--gold)}
+.cc.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 8px 26px rgba(216,184,121,.28)}
+.cc.rec{min-width:92px}
+.tress{display:block;width:100%;height:78px;border-radius:12px;background:linear-gradient(104deg,rgba(255,255,255,.38) 0%,rgba(255,255,255,0) 26%,rgba(0,0,0,0) 58%,rgba(0,0,0,.34) 100%),repeating-linear-gradient(93deg,rgba(255,255,255,.07) 0 2px,rgba(0,0,0,.09) 2px 4px),var(--c);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),0 6px 14px rgba(0,0,0,.35)}
+.tress.sm{width:46px;height:34px;border-radius:9px;flex:0 0 auto}
+.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:2px 0 6px}
+.tools .nat{padding:12px 18px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(216,184,121,.28);color:var(--txt);font:500 14px var(--font)}
+.tools .nat.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.own{position:relative;display:flex;align-items:center;gap:10px;padding:7px 14px 7px 8px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(216,184,121,.28);font:500 14px var(--font);color:var(--txt)}
+.own.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.own input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.cur{font:600 15px var(--font);letter-spacing:.14em;text-transform:uppercase;color:var(--gold2);margin:8px 2px 2px}
 </style>
 <link rel="manifest" href="manifest.json"><meta name="theme-color" content="#050b18"><link rel="icon" href="icon-192.png"><meta name="mobile-web-app-capable" content="yes"></head>
 <body>
@@ -151,10 +171,53 @@ const SERVICES=[
  {tr:"Komple boya",de:"Komplette Färbung",p:75},{tr:"Röfle / Balayage",de:"Strähnen / Balayage",p:120},
  {tr:"Keratin bakımı",de:"Keratin-Behandlung",p:140},{tr:"Gelin / özel gün saçı",de:"Brautfrisur / Festfrisur",p:90}];
 const COLORS=[
- {tr:"Siyah",de:"Schwarz",c:"#1a1a1c"},{tr:"Koyu kahve",de:"Dunkelbraun",c:"#4a2c1c"},{tr:"Kestane",de:"Kastanie",c:"#7a4126"},
- {tr:"Bal köpüğü",de:"Honigblond",c:"#c99b5c"},{tr:"Platin",de:"Platin",c:"#ece3cd"},{tr:"Bakır",de:"Kupfer",c:"#c25a20"},
- {tr:"Bordo",de:"Burgund",c:"#7a1736"},{tr:"Pastel pembe",de:"Pastellrosa",c:"#eaa7c6"},{tr:"Gümüş gri",de:"Silbergrau",c:"#b0b2bb"},
- {tr:"Gece mavisi",de:"Nachtblau",c:"#1c2f5e"}];
+ {tr:"Siyah",de:"Schwarz",c:"#1a1a1c",g:"k"},
+ {tr:"Koyu kahve",de:"Dunkelbraun",c:"#4a2c1c",g:"b"},
+ {tr:"Kestane",de:"Kastanie",c:"#7a4126",g:"b"},
+ {tr:"Bal köpüğü",de:"Honigblond",c:"#c99b5c",g:"s"},
+ {tr:"Platin",de:"Platin",c:"#ece3cd",g:"s"},
+ {tr:"Bakır",de:"Kupfer",c:"#c25a20",g:"r"},
+ {tr:"Bordo",de:"Burgund",c:"#7a1736",g:"r"},
+ {tr:"Pastel pembe",de:"Pastellrosa",c:"#eaa7c6",g:"f"},
+ {tr:"Gümüş gri",de:"Silbergrau",c:"#b0b2bb",g:"g"},
+ {tr:"Gece mavisi",de:"Nachtblau",c:"#1c2f5e",g:"f"},
+ {tr:"Mavi siyah",de:"Blauschwarz",c:"#14182a",g:"k"},
+ {tr:"Antrasit",de:"Anthrazit",c:"#2b2b30",g:"k"},
+ {tr:"Füme",de:"Rauchschwarz",c:"#38353a",g:"k"},
+ {tr:"Çikolata",de:"Schokolade",c:"#3b2216",g:"b"},
+ {tr:"Mokka",de:"Mokka",c:"#5a3a2a",g:"b"},
+ {tr:"Orta kahve",de:"Mittelbraun",c:"#6b4429",g:"b"},
+ {tr:"Açık kahve",de:"Hellbraun",c:"#8b5e3c",g:"b"},
+ {tr:"Karamel",de:"Karamell",c:"#a9713b",g:"b"},
+ {tr:"Kahve köpüğü",de:"Latte",c:"#b08968",g:"b"},
+ {tr:"Kızıl",de:"Rot",c:"#a8321e",g:"r"},
+ {tr:"Mahun",de:"Mahagoni",c:"#5c2018",g:"r"},
+ {tr:"Şarap",de:"Weinrot",c:"#5b0f2a",g:"r"},
+ {tr:"Vişne",de:"Kirschrot",c:"#9b1b22",g:"r"},
+ {tr:"Kızıl bal",de:"Rotblond",c:"#c47a3a",g:"r"},
+ {tr:"Koyu sarı",de:"Dunkelblond",c:"#9c7a45",g:"s"},
+ {tr:"Küllü sarı",de:"Aschblond",c:"#b5a283",g:"s"},
+ {tr:"Altın sarı",de:"Goldblond",c:"#d4aa5a",g:"s"},
+ {tr:"Bej sarı",de:"Beigeblond",c:"#d9c29a",g:"s"},
+ {tr:"Çilek sarısı",de:"Erdbeerblond",c:"#d29a6a",g:"s"},
+ {tr:"Şampanya",de:"Champagner",c:"#e3cfa8",g:"s"},
+ {tr:"Buz sarısı",de:"Eisblond",c:"#f1ead9",g:"s"},
+ {tr:"Kül gri",de:"Aschgrau",c:"#8e9097",g:"g"},
+ {tr:"Grafit",de:"Graphit",c:"#4a4d55",g:"g"},
+ {tr:"Beyaz gri",de:"Weißgrau",c:"#d7d8dc",g:"g"},
+ {tr:"Gül",de:"Rosé",c:"#d97a9a",g:"f"},
+ {tr:"Fuşya",de:"Fuchsia",c:"#c2185b",g:"f"},
+ {tr:"Mor",de:"Violett",c:"#5e2a84",g:"f"},
+ {tr:"Lavanta",de:"Lavendel",c:"#a58bd1",g:"f"},
+ {tr:"Okyanus mavisi",de:"Ozeanblau",c:"#1f5fa8",g:"f"},
+ {tr:"Buz mavisi",de:"Eisblau",c:"#8cc7e6",g:"f"},
+ {tr:"Zümrüt",de:"Smaragd",c:"#137a5a",g:"f"},
+ {tr:"Nane",de:"Mint",c:"#8fd6b8",g:"f"},
+ {tr:"Turuncu",de:"Orange",c:"#e0702a",g:"f"},
+ {tr:"Özel renk",de:"Eigene Farbe",c:"#b05a8a",g:"x",custom:true}];
+const CUSTOM_IDX=COLORS.length-1;
+const FAMS=[["all","Tümü","Alle"],["k","Siyah","Schwarz"],["b","Kahve","Braun"],["r","Kızıl & Kırmızı","Rot & Kupfer"],["s","Sarı","Blond"],["g","Gri","Grau"],["f","Fantezi","Fantasie"]];
+let colFam="all";
 const PRODUCTS=[
  {tr:"Renk koruyucu şampuan",de:"Farbschutz-Shampoo",p:18,tag:"color"},{tr:"Renk koruyucu maske",de:"Farbschutz-Maske",p:24,tag:"color"},
  {tr:"Onarıcı saç serumu",de:"Reparatur-Haarserum",p:22,tag:"care"},{tr:"Isı koruyucu sprey",de:"Hitzeschutz-Spray",p:16,tag:"care"},
@@ -429,7 +492,14 @@ function panel(){
   if(tab==="face"){
     h+=`<p class="sub" id="sceneMsg"></p><div class="rows">${[["H",t.hairL],["S",t.skinL],["C",t.clothL]].map(([k,l])=>`<div class="srow"><i class="dot" id="sw${k}"></i><div><small>${l}</small><b id="tx${k}">–</b></div></div>`).join("")}</div><h3>${t.recC}</h3><div class="sw" id="recBox"></div><div class="chips"><button class="chip" data-act="parts">${showParts?t.hideParts:t.showParts}</button><button class="chip" data-act="analyze">${t.measure}</button></div>${shape?`<p class="sub">${t.shapeL}: ${SHAPES[shape][lang]}. ${SHAPES[shape]["d_"+lang]}</p>`:""}<p class="sub">${t.toneNote}</p><p class="sub" id="techLine" style="font-size:12px;word-break:break-all"></p>`;
   }else if(tab==="color"){
-    h+=`<p class="sub">${t.colorHint}</p><div class="sw">${COLORS.map((c,i)=>`<button class="${i===colorIdx?"on":""}" style="background:${c.c}" data-act="color" data-v="${i}" aria-label="${c[lang]}"></button>`).join("")}<button class="nat ${colorIdx===null?"on":""}" data-act="color" data-v="none">${t.natural}</button></div><p class="sub">${colorIdx===null?"":COLORS[colorIdx][lang]}</p><label class="sub">${t.intensity}<input id="int" type="range" min="20" max="100" value="${Math.round(intensity*100)}"></label>`;
+    const list=COLORS.map((c,i)=>({c,i})).filter(o=>!o.c.custom&&(colFam==="all"||o.c.g===colFam));
+    const cur=colorIdx===null?"":COLORS[colorIdx][lang];
+    h+=`<p class="sub">${t.colorHint}</p>
+<div class="fams">${FAMS.map(f=>`<button class="fam ${colFam===f[0]?"on":""}" data-act="fam" data-v="${f[0]}">${lang==="de"?f[2]:f[1]}</button>`).join("")}</div>
+<div class="cat">${list.map(o=>`<button class="cc ${o.i===colorIdx?"on":""}" style="--c:${o.c.c}" data-act="color" data-v="${o.i}"><span class="tress"></span><b>${o.c[lang]}</b><small>N° ${String(o.i+1).padStart(2,"0")}</small></button>`).join("")}</div>
+<div class="tools"><button class="nat ${colorIdx===null?"on":""}" data-act="color" data-v="none">${t.natural}</button>
+<label class="own ${colorIdx===CUSTOM_IDX?"on":""}"><span class="tress sm" style="--c:${COLORS[CUSTOM_IDX].c}"></span>${lang==="de"?"Eigene Farbe wählen":"Özel renk seç"}<input id="cc" type="color" value="${COLORS[CUSTOM_IDX].c}"></label></div>
+<p class="cur">${cur}</p><label class="sub">${t.intensity}<input id="int" type="range" min="20" max="100" value="${Math.round(intensity*100)}"></label>`;
   }else if(tab==="style"){
     if(shape){const S=SHAPES[shape];h+=`<h3>${t.recFor}</h3><div class="row">${S["s_"+lang].map(s=>`<div class="card"><b>${s}</b><span class="tag">${S[lang]}</span></div>`).join("")}</div>`}
     const all=Object.values(SHAPES).flatMap(S=>S["s_"+lang].map(n=>({n,sh:S[lang]})));
@@ -486,7 +556,7 @@ function renderScene(){
   set("C",scene.col[4]);
   if(rb&&rb.dataset.k!==tone){
     const idx={warm:[3,5,2,1],cool:[4,8,6,9],neutral:[1,2,6,3]}[tone];
-    rb.innerHTML=idx.map(i=>`<button style="background:${COLORS[i].c}" data-act="rec" data-v="${i}" aria-label="${COLORS[i][lang]}"></button>`).join("");
+    rb.innerHTML=idx.map(i=>`<button class="cc rec" style="--c:${COLORS[i].c}" data-act="rec" data-v="${i}"><span class="tress"></span><b>${COLORS[i][lang]}</b></button>`).join("");
     rb.dataset.k=tone;
   }
 }
@@ -566,6 +636,7 @@ document.addEventListener("click",e=>{
   else if(a==="mode")toggleMode();
   else if(a==="parts"){showParts=!showParts;partsReady=false;panel()}
   else if(a==="rec"){colorIdx=+v;layerReady=false;hairPct=-1;lmS=null;if(!running)setBadge(T().needCam,2500);else{loadModels();refreshBadge()}panel()}
+  else if(a==="fam"){colFam=v;panel()}
   else if(a==="mic")toggleMic();
   else if(a==="shape")setShape(v);
   else if(a==="again"){shape=null;refreshBadge();panel()}
@@ -580,7 +651,15 @@ document.addEventListener("click",e=>{
   else if(a==="closecmp")$("cmp").classList.remove("on");
   else if(a==="save")save();
 });
-document.addEventListener("input",e=>{if(e.target.id==="int")intensity=e.target.value/100});
+document.addEventListener("input",e=>{
+  if(e.target.id==="int")intensity=e.target.value/100;
+  else if(e.target.id==="cc"){
+    COLORS[CUSTOM_IDX].c=e.target.value;colorIdx=CUSTOM_IDX;layerReady=false;hairPct=-1;lmS=null;
+    const lb=e.target.parentElement;lb.classList.add("on");const sm=lb.querySelector(".tress");if(sm)sm.style.setProperty("--c",e.target.value);
+    document.querySelectorAll(".cc.on,.nat.on").forEach(x=>x.classList.remove("on"));
+    if(!running)setBadge(T().needCam,2500);else{loadModels();refreshBadge()}
+  }
+});
 document.addEventListener("keydown",e=>{if(e.target.id==="inp"&&e.key==="Enter")ask(e.target.value)});
 
 /* ================= REKLAM EKRANI ================= */
