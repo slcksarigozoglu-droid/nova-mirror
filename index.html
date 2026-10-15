@@ -304,12 +304,20 @@ function segment(){
     else if(segFailCnt%10===2)refreshBadge();
   }
 }
+let lmS=null;
 function paintHair(){
-  const L=lum(COLORS[colorIdx].c);
+  const Lt=lum(COLORS[colorIdx].c);
+  const hc=scene&&scene.col&&scene.col[1];
+  const lm0=hc?(.2126*hc[0]+.7152*hc[1]+.0722*hc[2])/255:.25;
+  lmS=lmS===null?lm0:lmS*.85+lm0*.15;
+  const A=Math.min(1,intensity),up=Lt-lmS,dn=lmS-Lt;
   vctx.save();vctx.imageSmoothingEnabled=true;vctx.imageSmoothingQuality="high";
-  vctx.globalAlpha=Math.min(1,intensity);vctx.globalCompositeOperation="color";
+  /* 1) Parlaklık: saç hedef renkten açıksa aydınlat, koyuysa karart (renk tek başına ton değiştirir, açıklığı değiştirmez) */
+  if(up>.05){vctx.globalAlpha=A*Math.min(.85,up*1.3);vctx.globalCompositeOperation="screen";vctx.drawImage(layerB,0,0,view.width,view.height)}
+  else if(dn>.05){vctx.globalAlpha=A*Math.min(.85,dn*1.3);vctx.globalCompositeOperation="multiply";vctx.drawImage(layerB,0,0,view.width,view.height)}
+  /* 2) Ton ve doygunluk: gerçek saç dokusunu (teller, gölge, parlama) koruyarak rengi uygula */
+  vctx.globalAlpha=A;vctx.globalCompositeOperation="color";
   vctx.drawImage(layerB,0,0,view.width,view.height);
-  if(L>.45){vctx.globalAlpha=Math.min(1,intensity*(L-.2));vctx.globalCompositeOperation="soft-light";vctx.drawImage(layerB,0,0,view.width,view.height)}
   vctx.restore();
 }
 function frame(ts){
@@ -557,12 +565,12 @@ document.addEventListener("click",e=>{
   else if(a==="photo")photo();
   else if(a==="mode")toggleMode();
   else if(a==="parts"){showParts=!showParts;partsReady=false;panel()}
-  else if(a==="rec"){colorIdx=+v;layerReady=false;hairPct=-1;if(!running)setBadge(T().needCam,2500);else{loadModels();refreshBadge()}panel()}
+  else if(a==="rec"){colorIdx=+v;layerReady=false;hairPct=-1;lmS=null;if(!running)setBadge(T().needCam,2500);else{loadModels();refreshBadge()}panel()}
   else if(a==="mic")toggleMic();
   else if(a==="shape")setShape(v);
   else if(a==="again"){shape=null;refreshBadge();panel()}
   else if(a==="color"){
-    colorIdx=v==="none"?null:+v;layerReady=false;hairPct=-1;
+    colorIdx=v==="none"?null:+v;layerReady=false;hairPct=-1;lmS=null;
     if(colorIdx!==null){if(!running)setBadge(T().needCam,2500);else{loadModels();refreshBadge()}}
     else refreshBadge();
     panel();
