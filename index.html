@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Nova Mirror</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Syncopate:wght@400;700&display=swap">
+<style>
+/* Düzen: dikey ayna ekranı. Üstte logo ve saat, ortada LED çerçeveli kamera sahnesi (sağda dikey menü), altta içerik paneli. Yatay ekranda panel sağa geçer. */
+:root{color-scheme:dark;--bg:#050914;--glass:rgba(12,22,46,.86);--glass2:rgba(24,40,78,.72);--line:rgba(130,178,255,.24);--acc:#46a8ff;--acc2:#8fd8ff;--warm:#ffe3bd;--txt:#eaf2ff;--mut:#8da2c6;--ok:#5fe0b0;
+--font:'Outfit',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--logo:'Syncopate','Outfit',system-ui,sans-serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:radial-gradient(120% 80% at 70% 0%,#10224a 0%,var(--bg) 62%);color:var(--txt);font-family:var(--font);user-select:none;-webkit-user-select:none;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px}
+button{font:inherit;color:inherit;cursor:pointer;border:0}
+#app{height:100%;display:grid;gap:12px;grid-template-rows:auto minmax(0,1fr) minmax(0,38%);grid-template-areas:"top" "stage" "panel"}
+@media (min-aspect-ratio:1/1){#app{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);grid-template-rows:auto minmax(0,1fr);grid-template-areas:"top top" "stage panel"}}
+.top{grid-area:top;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.logo{font-family:var(--logo);line-height:1}
+.logo b{display:block;font-size:24px;font-weight:700;letter-spacing:.2em}
+.logo i{display:block;font-style:normal;font-size:11px;letter-spacing:.62em;color:var(--mut);margin-top:6px}
+.o{display:inline-block;width:.84em;height:.84em;border-radius:50%;border:.14em solid var(--acc);border-right-color:var(--acc2);border-bottom-color:transparent;vertical-align:-.05em;margin:0 .05em;transform:rotate(-30deg)}
+.clock{text-align:right;margin-left:auto}
+.clock b{font-size:22px;font-weight:500;letter-spacing:.02em}
+.clock small{display:block;color:var(--mut);font-size:12px;margin-top:2px}
+.lang{display:flex;gap:6px}
+.lang button{padding:8px 12px;border-radius:14px;background:var(--glass);border:1px solid var(--line);font-weight:600;font-size:13px}
+.lang button.on{background:linear-gradient(135deg,var(--acc),#2f6fe0);border-color:transparent}
+.stage{grid-area:stage;position:relative;min-height:0;border-radius:30px;overflow:hidden;background:#02050d;border:3px solid #fff1da;box-shadow:0 0 0 1px rgba(255,227,189,.5),0 0 28px rgba(255,227,189,.45),inset 0 0 40px rgba(0,0,0,.6)}
+#view{position:absolute;inset:0;width:100%;height:100%;display:block}
+#cam{position:absolute;width:2px;height:2px;opacity:0;pointer-events:none}
+.guide{position:absolute;inset:8% 22%;border:2px solid rgba(143,216,255,.5);border-radius:50%;pointer-events:none;box-shadow:inset 0 0 22px rgba(70,168,255,.22)}
+.scan{position:absolute;left:12%;right:12%;top:8%;height:3px;background:linear-gradient(90deg,transparent,var(--acc2),transparent);box-shadow:0 0 18px var(--acc2);opacity:0;pointer-events:none}
+.scan.run{animation:scan 1.6s ease-in-out forwards}
+@keyframes scan{0%{top:8%;opacity:1}100%{top:90%;opacity:1}}
+.badge{position:absolute;left:14px;top:14px;max-width:calc(100% - 100px);padding:8px 14px;border-radius:14px;background:var(--glass);border:1px solid var(--line);font-size:14px;z-index:3}
+.rail{position:absolute;right:10px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:3;max-height:88%;overflow-y:auto;scrollbar-width:none}
+.rail::-webkit-scrollbar{display:none}
+.rail button{width:60px;flex:0 0 auto;padding:9px 0 7px;border-radius:17px;background:var(--glass);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:4px;font:500 10px var(--font)}
+.rail svg,.btn svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.rail button.on{border-color:var(--acc2);color:var(--acc2);box-shadow:0 0 18px rgba(70,168,255,.45)}
+.actions{position:absolute;left:14px;right:84px;bottom:14px;display:flex;justify-content:center;gap:10px;z-index:3}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;border-radius:16px;background:linear-gradient(135deg,var(--acc),#2f6fe0);color:#fff;font:600 15px var(--font);box-shadow:0 8px 24px rgba(47,111,224,.4)}
+.btn.ghost{background:var(--glass);border:1px solid var(--line);box-shadow:none;}
+.btn.round{padding:13px;width:50px}
+.btn.rec{animation:pulse 1s infinite;border-color:var(--acc2)}
+@keyframes pulse{50%{box-shadow:0 0 0 10px rgba(70,168,255,.25)}}
+.cover{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:28px 76px 28px 28px;text-align:center;background:linear-gradient(180deg,rgba(5,9,20,.55),rgba(5,9,20,.86));}
+.cover h2{font-size:26px}
+.cmp{position:absolute;inset:0;z-index:6;background:#000;display:none;touch-action:none}
+.cmp.on{display:block}
+.cmp canvas{position:absolute;inset:0;width:100%;height:100%}
+#cmpAfter{clip-path:inset(0 0 0 50%)}
+.hd{position:absolute;top:0;bottom:0;left:50%;width:3px;background:#fff;box-shadow:0 0 12px #fff;transform:translateX(-1.5px);pointer-events:none}
+.hd::after{content:"\2194";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;background:#fff;color:#0a1630;display:grid;place-items:center;font-size:20px}
+.lb{position:absolute;top:14px;padding:6px 12px;border-radius:12px;background:var(--glass);border:1px solid var(--line);font-size:13px}
+.cmp .actions{left:0;right:0}
+.panel{grid-area:panel;min-height:0;overflow-y:auto;border-radius:26px;background:var(--glass);border:1px solid var(--line);padding:16px;}
+h2{margin:0 0 6px;font-size:19px;font-weight:600}
+h3{margin:14px 0 8px;font-size:14px;font-weight:500;color:var(--acc2);letter-spacing:.04em}
+.sub{color:var(--mut);font-size:14px;line-height:1.5;margin:0 0 10px}
+.big{font-size:30px;font-weight:600;background:linear-gradient(90deg,var(--acc2),var(--acc));-webkit-background-clip:text;background-clip:text;color:transparent;margin:4px 0}
+.row{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}
+.card{flex:0 0 auto;min-width:140px;max-width:200px;padding:14px;border-radius:18px;background:var(--glass2);border:1px solid var(--line);display:flex;flex-direction:column;gap:8px;font-size:15px}
+.tag{align-self:flex-start;padding:3px 10px;border-radius:10px;background:rgba(70,168,255,.16);color:var(--acc2);font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.grid .card{max-width:none}
+.price{color:var(--ok);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:10px 16px;border-radius:16px;border:1px solid var(--line);background:var(--glass2);font:500 14px var(--font)}
+.sw{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:6px 0 10px}
+.sw button{width:52px;height:52px;border-radius:50%;border:2px solid rgba(255,255,255,.28)}
+.sw button.on{border-color:#fff;box-shadow:0 0 0 4px rgba(70,168,255,.5),0 0 20px rgba(70,168,255,.5)}
+.sw .nat{width:auto;height:auto;padding:12px 16px;border-radius:16px;background:var(--glass2);font:500 14px var(--font)}
+input[type=range]{width:100%;accent-color:var(--acc);margin-top:8px}
+.pad{height:10px}
+.rows{display:grid;gap:10px;margin:6px 0 4px}
+.srow{display:flex;align-items:center;gap:12px}
+.srow small{display:block;color:var(--mut);font-size:12px}
+.srow b{font-weight:500;font-size:15px}
+.dot{width:34px;height:34px;border-radius:50%;border:2px solid rgba(255,255,255,.3);flex:0 0 auto;display:block}
+body.mirror{background:#000}
+.stage.mirror{background:#000}
+.stage.mirror #view,.stage.mirror .guide{visibility:hidden}
+#chat{display:flex;flex-direction:column;gap:8px;max-height:30vh;overflow-y:auto;margin-bottom:10px}
+.msg{padding:11px 15px;border-radius:16px;max-width:88%;line-height:1.45;font-size:15px}
+.msg.n{background:var(--glass2);align-self:flex-start}.msg.u{background:rgba(70,168,255,.28);align-self:flex-end}
+.send{display:flex;gap:8px;margin-top:10px}
+.inp{flex:1;min-width:0;padding:13px 14px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--txt);font:400 15px var(--font);user-select:text;-webkit-user-select:text}
+.attract{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;flex-direction:column;gap:22px;text-align:center;padding:32px;background:radial-gradient(90% 70% at 50% 30%,#12285a,#050914 70%)}
+.attract.on{display:flex;animation:fade .6s}
+.attract video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55}
+.attract .logo,.attract .ms,.attract .tap{position:relative}
+.attract .logo b{font-size:40px}
+.attract .ms{font-size:clamp(22px,4.6vw,40px);font-weight:300;line-height:1.3;max-width:18em;min-height:2.7em}
+.attract .tap{color:var(--acc2);letter-spacing:.2em;font-size:13px;text-transform:uppercase}
+@keyframes fade{from{opacity:0}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#050b18"><link rel="icon" href="icon-192.png"><meta name="mobile-web-app-capable" content="yes"></head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="logo"><b>N<span class="o"></span>VA</b><i>MIRROR</i></div>
+    <div class="clock"><b id="clk"></b><small id="dt"></small></div>
+    <div class="lang"><button id="l-tr" data-act="lang" data-v="tr">TR</button><button id="l-de" data-act="lang" data-v="de">DE</button></div>
+  </header>
+  <section class="stage" id="stage">
+    <video id="cam" playsinline muted></video>
+    <canvas id="view"></canvas>
+    <div class="guide" id="guide"></div>
+    <div class="scan" id="scan"></div>
+    <div class="badge" id="badge" hidden></div>
+    <nav class="rail" id="rail"></nav>
+    <div class="actions" id="actions"></div>
+    <div class="cover" id="cover"></div>
+    <div class="cmp" id="cmp">
+      <canvas id="cmpBefore"></canvas><canvas id="cmpAfter"></canvas>
+      <div class="hd" id="hd"></div>
+      <span class="lb" id="lbB" style="left:14px"></span><span class="lb" id="lbA" style="right:14px"></span>
+      <div class="actions" id="cmpActions"></div>
+    </div>
+  </section>
+  <section class="panel" id="panel"></section>
+</div>
+<div class="attract" id="attract">
+  <video id="adVid" muted loop playsinline hidden></video>
+  <div class="logo"><b>N<span class="o"></span>VA</b><i>MIRROR</i></div>
+  <div class="ms" id="adMsg"></div>
+  <div class="tap" id="adTap"></div>
+</div>
+
+<script type="module">
+/* ================= AYARLAR / EINSTELLUNGEN ================= */
+const AI_ENDPOINT = "";            // İsteğe bağlı: kendi sunucunuzun adresi. POST {lang,message,faceShape} -> {reply}
+const IDLE_MS = 90000;             // Bu kadar dokunulmazsa reklam ekranı açılır
+const ADS = { video:"",            // Salon tanıtım videosu: dosya adı (ör. "tanitim.mp4"). Boşsa yazılar döner.
+  tr:["Saç hayallerinizi birlikte gerçeğe dönüştürelim.","Yeni rengini aynada canlı dene.","Sana en uygun kesimi yapay zeka seçsin."],
+  de:["Lassen Sie uns Ihre Haarträume wahr machen.","Probieren Sie Ihre neue Farbe live im Spiegel.","Die KI findet den Schnitt, der zu Ihnen passt."] };
+const LM_URL  = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
+const SEG_URL = "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite";
+const MAX_RES = 800;               // Görüntü çözünürlük sınırı. Telefonda 800, güçlü mini PC'de 1600 yapılabilir.
+const SEG_DELEGATE = "CPU";        // Telefonda CPU daha güvenilir. Güçlü ekran kartlı mini PC'de "GPU" yapılabilir.
+
+const SERVICES=[
+ {tr:"Kadın saç kesimi",de:"Damenhaarschnitt",p:45},{tr:"Erkek saç kesimi",de:"Herrenhaarschnitt",p:28},
+ {tr:"Sakal şekillendirme",de:"Bartpflege",p:15},{tr:"Yıkama & fön",de:"Waschen & Föhnen",p:30},
+ {tr:"Komple boya",de:"Komplette Färbung",p:75},{tr:"Röfle / Balayage",de:"Strähnen / Balayage",p:120},
+ {tr:"Keratin bakımı",de:"Keratin-Behandlung",p:140},{tr:"Gelin / özel gün saçı",de:"Brautfrisur / Festfrisur",p:90}];
+const COLORS=[
+ {tr:"Siyah",de:"Schwarz",c:"#1a1a1c"},{tr:"Koyu kahve",de:"Dunkelbraun",c:"#4a2c1c"},{tr:"Kestane",de:"Kastanie",c:"#7a4126"},
+ {tr:"Bal köpüğü",de:"Honigblond",c:"#c99b5c"},{tr:"Platin",de:"Platin",c:"#ece3cd"},{tr:"Bakır",de:"Kupfer",c:"#c25a20"},
+ {tr:"Bordo",de:"Burgund",c:"#7a1736"},{tr:"Pastel pembe",de:"Pastellrosa",c:"#eaa7c6"},{tr:"Gümüş gri",de:"Silbergrau",c:"#b0b2bb"},
+ {tr:"Gece mavisi",de:"Nachtblau",c:"#1c2f5e"}];
+const PRODUCTS=[
+ {tr:"Renk koruyucu şampuan",de:"Farbschutz-Shampoo",p:18,tag:"color"},{tr:"Renk koruyucu maske",de:"Farbschutz-Maske",p:24,tag:"color"},
+ {tr:"Onarıcı saç serumu",de:"Reparatur-Haarserum",p:22,tag:"care"},{tr:"Isı koruyucu sprey",de:"Hitzeschutz-Spray",p:16,tag:"care"},
+ {tr:"Hacim verici köpük",de:"Volumenschaum",p:15,tag:"style"},{tr:"Besleyici saç yağı",de:"Nährendes Haaröl",p:20,tag:"care"}];
+const SHAPES={
+ oval:{tr:"Oval",de:"Oval",d_tr:"Dengeli oranlara sahipsin; neredeyse her model yakışır.",d_de:"Du hast ausgewogene Proportionen; fast jede Frisur steht dir.",
+  s_tr:["Katlı uzun kesim","Bob","Dalgalı saçlar","Pompadour","Yandan taralı klasik"],s_de:["Langer Stufenschnitt","Bob","Wellen","Pompadour","Klassischer Seitenscheitel"]},
+ round:{tr:"Yuvarlak",de:"Rund",d_tr:"Yüzü uzatan, hacmi tepeye taşıyan modeller iyi görünür.",d_de:"Frisuren, die das Gesicht strecken und Volumen oben setzen, passen gut.",
+  s_tr:["Uzun katlı kesim","Yandan ayrık uzun bob","Yüksek topuz","Fade + üstü uzun","Quiff"],s_de:["Langer Stufenschnitt","Langer Bob mit Seitenscheitel","Hoher Dutt","Fade mit langem Deckhaar","Quiff"]},
+ square:{tr:"Kare",de:"Eckig",d_tr:"Çene hattını yumuşatan dalgalar ve katlar çok yakışır.",d_de:"Wellen und Stufen, die die Kieferlinie weicher machen, stehen dir sehr gut.",
+  s_tr:["Yumuşak dalgalar","Yan kesim uzun bob","Perde kâkül","Textured crop","Yanlar kısa, üst dağınık"],s_de:["Weiche Wellen","Langer Bob mit Seitenlinie","Vorhangpony","Textured Crop","Seiten kurz, oben locker"]},
+ oblong:{tr:"Uzun",de:"Länglich",d_tr:"Genişlik katan modeller yüzü dengeler; kâkül çok işe yarar.",d_de:"Frisuren mit seitlichem Volumen gleichen aus; ein Pony hilft sehr.",
+  s_tr:["Çene hizası bob","Kâkül + dalgalar","Kıvırcık hacimli kesim","Yanlar dolgun orta boy","Kısa kâküllü kesim"],s_de:["Kinnlanger Bob","Pony + Wellen","Voluminöser Lockenschnitt","Seitlich volle Mittellänge","Kurzer Pony-Schnitt"]},
+ heart:{tr:"Kalp",de:"Herzförmig",d_tr:"Alın geniş, çene dar; çene hizasında hacim dengeyi sağlar.",d_de:"Breite Stirn, schmales Kinn; Volumen auf Kinnhöhe sorgt für Balance.",
+  s_tr:["Çene hizası katlı kesim","Yandan kâkül","Alt uçları dalgalı uzun","Orta boy lob","Yana taranmış kısa kesim"],s_de:["Gestufter Schnitt auf Kinnhöhe","Seitlicher Pony","Lang mit welligen Spitzen","Lob (mittellang)","Kurzer Seitenscheitel"]}};
+
+const TX={
+ tr:{speech:"tr-TR",
+  rail:{face:"Analiz",color:"Renkler",style:"Modeller",prod:"Ürünler",menu:"Fiyatlar",chat:"Nova"},
+  title:{face:"Nova'nın gördüğü",color:"Renk simülasyonu",style:"Saç modelleri",prod:"Ürün önerileri",menu:"Hizmetler ve fiyatlar",chat:"Nova ile konuş"},
+  hi:"Merhaba, ben Nova",consent:"Kamera yüzünü analiz etmek ve saç rengini canlı göstermek için kullanılır. Görüntü yalnızca bu cihazda işlenir; kaydedilmez ve gönderilmez.",
+  start:"Aynayı başlat",talk:"Nova ile konuş",loadingAI:"Yapay zeka hazırlanıyor…",aiFail:"Yapay zeka modeli yüklenemedi (internet gerekli). Kamera çalışıyor.",
+  segFail:"Görüntü modeli yüklenemedi",segRun:"Görüntü analizi hata veriyor",nohair:"Saç algılanamadı. Yüzünü ortala, ışığa dön.",
+  seen:"Nova'nın gördüğü",hairL:"Saç",skinL:"Ten",clothL:"Kıyafet",showParts:"Parçaları göster",hideParts:"Parçaları gizle",mirrorOn:"Ayna modu",tryOn:"Deneme modu",
+  mirrorNote:"Ayna modu: ekran siyah, gerçek ayna camında yansıman görünür.",tryNote:"Deneme modu: kamera görüntün ekranda.",
+  warm:"sıcak ton",neutral:"nötr ton",cool:"soğuk ton",skinLv:["açık ten","orta ten","koyu ten"],toneNote:"Ten tonu yaklaşık ölçülür.",recC:"Tenine yakışabilecek renkler",
+  sceneHint:"Aynayı başlat, Nova seni görsün.",noPerson:"Henüz kimse görünmüyor.",lookingAt:"Nova seni inceliyor…",measure:"Yüz oranlarını ölç",
+  camerr:"Kamera açılamadı. İzin verdiğinden emin ol.",needCam:"Önce aynayı başlat.",analyze:"Yüzümü analiz et",photo:"Fotoğraf",
+  noface:"Yüz bulunamadı. Işığa dön, yüzünü ortala.",shapeL:"Yüz şekli",recFor:"Sana en uygun saç modelleri",again:"Yeniden analiz et",
+  faceHint:"Kamera açıkken “Yüzümü analiz et” düğmesine dokun. Kamera yoksa yüz şeklini elle seçebilirsin.",manual:"Yüz şeklini elle seç",
+  colorHint:"Bir renge dokun, saçında canlı gör.",natural:"Doğal",intensity:"Yoğunluk",before:"Önce",after:"Sonra",save:"Kaydet",close:"Kapat",
+  catalog:"Katalog",catNote:"Canlı saç modeli denemesi bir sonraki sürümde. Şimdilik renkleri canlı deneyebilirsin.",
+  prodHintC:"Seçtiğin renge göre öneriler önce gelir.",prodHint:"Salonumuzda bulabileceğin bakım ürünleri.",
+  ask:"Bir şey sor…",listening:"Dinliyorum…",nomic:"Bu tarayıcı sesli girişi desteklemiyor (Chrome dene).",tap:"Başlamak için dokun",
+  chips:["Fiyatlar neler?","Bana ne yakışır?","Boya renkleri","Merhaba"],
+  hello:"Merhaba! Ben Nova. Saç modeli, fiyat ya da boya hakkında soru sorabilirsin.",
+  price:"İşte bazı hizmetlerimiz: ",shapeIs:(s,d)=>`Yüz şeklin ${s}. ${d}`,askFace:"Yüz analizini yaparsan sana özel öneri verebilirim. Analiz sekmesine dokun.",
+  sugg:l=>`Sana şunları öneririm: ${l}.`,colors:l=>`Boya seçeneklerimiz: ${l}.`,fallback:"Tam anlayamadım. Fiyatlar, saç modelleri ya da boya renkleri hakkında sorabilirsin.",thanks:"Rica ederim! Başka bir şey var mı?",
+  kw:{price:/fiyat|ücret|kaç para|ne kadar|hizmet/,style:/yakış|model|kesim|öner|saç/,color:/boya|renk|röfle|balayage/,hello:/merhaba|selam|günaydın|nasılsın/,thanks:/teşekkür|sağ ol|eyvallah/}},
+ de:{speech:"de-DE",
+  rail:{face:"Analyse",color:"Farben",style:"Frisuren",prod:"Pflege",menu:"Preise",chat:"Nova"},
+  title:{face:"Das sieht Nova",color:"Farbsimulation",style:"Frisuren",prod:"Produktempfehlungen",menu:"Leistungen und Preise",chat:"Mit Nova sprechen"},
+  hi:"Hallo, ich bin Nova",consent:"Die Kamera dient der Gesichtsanalyse und der Live-Haarfarbe. Das Bild wird nur auf diesem Gerät verarbeitet; es wird nicht gespeichert oder gesendet.",
+  start:"Spiegel starten",talk:"Mit Nova sprechen",loadingAI:"KI wird vorbereitet…",aiFail:"KI-Modell konnte nicht geladen werden (Internet nötig). Kamera läuft.",
+  segFail:"Bildmodell konnte nicht geladen werden",segRun:"Bildanalyse meldet einen Fehler",nohair:"Haare nicht erkannt. Gesicht zentrieren, zum Licht drehen.",
+  seen:"Das sieht Nova",hairL:"Haar",skinL:"Haut",clothL:"Kleidung",showParts:"Bereiche zeigen",hideParts:"Bereiche ausblenden",mirrorOn:"Spiegelmodus",tryOn:"Anprobe-Modus",
+  mirrorNote:"Spiegelmodus: Bildschirm schwarz, im echten Spiegelglas siehst du dein Spiegelbild.",tryNote:"Anprobe-Modus: Kamerabild auf dem Bildschirm.",
+  warm:"warmer Ton",neutral:"neutraler Ton",cool:"kühler Ton",skinLv:["helle Haut","mittlere Haut","dunkle Haut"],toneNote:"Der Hautton wird nur ungefähr gemessen.",recC:"Farben, die zu deinem Hautton passen könnten",
+  sceneHint:"Starte den Spiegel, damit Nova dich sieht.",noPerson:"Noch niemand zu sehen.",lookingAt:"Nova schaut sich dich an…",measure:"Gesichtsproportionen messen",
+  camerr:"Kamera nicht verfügbar. Bitte Zugriff erlauben.",needCam:"Starte zuerst den Spiegel.",analyze:"Gesicht analysieren",photo:"Foto",
+  noface:"Kein Gesicht gefunden. Zum Licht drehen, Gesicht zentrieren.",shapeL:"Gesichtsform",recFor:"Diese Frisuren passen zu dir",again:"Neu analysieren",
+  faceHint:"Tippe bei laufender Kamera auf „Gesicht analysieren“. Ohne Kamera kannst du die Form manuell wählen.",manual:"Gesichtsform manuell wählen",
+  colorHint:"Tippe auf eine Farbe und sieh sie live in deinem Haar.",natural:"Natürlich",intensity:"Intensität",before:"Vorher",after:"Nachher",save:"Speichern",close:"Schließen",
+  catalog:"Katalog",catNote:"Die Live-Frisurenanprobe kommt in der nächsten Version. Farben kannst du schon live testen.",
+  prodHintC:"Passend zu deiner Farbe stehen vorn.",prodHint:"Pflegeprodukte aus unserem Salon.",
+  ask:"Frag etwas…",listening:"Ich höre zu…",nomic:"Dieser Browser unterstützt keine Spracheingabe (Chrome probieren).",tap:"Zum Starten tippen",
+  chips:["Was kostet was?","Was steht mir?","Haarfarben","Hallo"],
+  hello:"Hallo! Ich bin Nova. Frag mich zu Frisuren, Preisen oder Haarfarben.",
+  price:"Das sind einige unserer Leistungen: ",shapeIs:(s,d)=>`Deine Gesichtsform ist ${s}. ${d}`,askFace:"Mit einer Gesichtsanalyse kann ich dir persönliche Tipps geben. Tippe auf Analyse.",
+  sugg:l=>`Ich empfehle dir: ${l}.`,colors:l=>`Unsere Farbtöne: ${l}.`,fallback:"Das habe ich nicht ganz verstanden. Frag mich nach Preisen, Frisuren oder Haarfarben.",thanks:"Gern geschehen! Noch etwas?",
+  kw:{price:/preis|kost|leistung|wie viel|wieviel/,style:/steht|frisur|schnitt|empfehl|haar/,color:/farbe|färb|strähn|balayage|blond|braun/,hello:/hallo|guten tag|moin|servus|hi\b/,thanks:/danke|dankeschön/}}};
+
+const ICON={
+ face:'<path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><circle cx="12" cy="10" r="3"/><path d="M7 17c1-2.4 3-3.4 5-3.4s4 1 5 3.4"/>',
+ color:'<path d="M12 3s6 6.2 6 10.5A6 6 0 0 1 6 13.5C6 9.2 12 3 12 3z"/>',
+ style:'<circle cx="6" cy="6" r="2.6"/><circle cx="6" cy="18" r="2.6"/><path d="M8.2 7.4 20 17M8.2 16.6 20 7"/>',
+ prod:'<path d="M9 3h6v3H9zM8 6h8l1 4v10a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V10z"/>',
+ menu:'<path d="M5 7h14M5 12h14M5 17h9"/>',
+ chat:'<path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H10l-4 4v-4a2 2 0 0 1-2-2z"/>',
+ mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>'};
+const svg=n=>`<svg viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
+const TABS=["face","color","style","prod","menu","chat"];
+
+/* ================= DURUM ================= */
+const $=id=>document.getElementById(id);
+let lang="tr",tab="face",shape=null,colorIdx=null,intensity=.7,stream=null,running=false;
+let vision=null,landmarker=null,segmenter=null,fileset=null,modelsState="idle",layerReady=false,lastSeg=0,chatLog=[],rec=null,listening=false,badgeTimer=null,lastTouch=Date.now(),adIdx=0;
+let segErr="",segDel="",hairPct=-1,segRuns=0,segFailCnt=0,segSwitching=false;
+let scene=null,showParts=false,partsReady=false,mirrorMode=false,smooth=null,loadTries=0,segGap=110,hidBuf=null,pidBuf=null;
+const CLS_COL=[null,[255,80,200],[255,170,60],[255,225,120],[70,160,255],[120,255,160]];
+const T=()=>TX[lang];
+const view=$("view"),vctx=view.getContext("2d"),cam=$("cam");
+const work=document.createElement("canvas"),wctx=work.getContext("2d");
+const samp=document.createElement("canvas"),sctx=samp.getContext("2d",{willReadFrequently:true});
+const layer=document.createElement("canvas"),lctx=layer.getContext("2d");
+const parts=document.createElement("canvas"),pctx=parts.getContext("2d");
+const layerB=document.createElement("canvas"),lbctx=layerB.getContext("2d");
+const eur=n=>lang==="de"?n.toFixed(0)+" €":"€"+n.toFixed(0);
+const rgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const lum=h=>{const[r,g,b]=rgb(h);return(.2126*r+.7152*g+.0722*b)/255};
+
+/* ================= GÖRÜNTÜ ================= */
+function resize(){
+  const r=$("stage").getBoundingClientRect(),d=Math.min(window.devicePixelRatio||1,2);
+  let w=Math.round(r.width*d),h=Math.round(r.height*d);const m=Math.max(w,h);
+  if(m>MAX_RES){w=Math.round(w*MAX_RES/m);h=Math.round(h*MAX_RES/m)}
+  if(w<2||h<2)return;
+  if(view.width!==w||view.height!==h){view.width=w;view.height=h}
+  const ww=256,wh=Math.max(64,Math.round(256*h/w));
+  if(work.width!==ww||work.height!==wh){work.width=ww;work.height=wh;layerReady=false}
+}
+new ResizeObserver(resize).observe($("stage"));
+function drawCover(ctx,src,w,h){
+  const sw=src.videoWidth||src.width,sh=src.videoHeight||src.height;if(!sw||!sh)return;
+  const s=Math.max(w/sw,h/sh),dw=sw*s,dh=sh*s;
+  ctx.save();ctx.translate(w,0);ctx.scale(-1,1);ctx.drawImage(src,(w-dw)/2,(h-dh)/2,dw,dh);ctx.restore();
+}
+function segment(){
+  if(!segmenter||segSwitching)return;
+  const t0=performance.now();
+  drawCover(wctx,cam,work.width,work.height);
+  try{segmenter.segmentForVideo(work,performance.now(),res=>{
+    const cm=res.categoryMask;if(!cm){segErr="maske yok";return}
+    const f=cm.getAsUint8Array(),w=cm.width,h=cm.height,n=f.length;
+    if(layer.width!==w||layer.height!==h){layer.width=w;layer.height=h;parts.width=w;parts.height=h;smooth=null}
+    if(!smooth||smooth.length!==n)smooth=new Float32Array(n);
+    if(samp.width!==work.width||samp.height!==work.height){samp.width=work.width;samp.height=work.height}
+    sctx.drawImage(work,0,0);
+    const px=sctx.getImageData(0,0,work.width,work.height).data,sx=work.width/w,sy=work.height/h;
+    let mx=0;
+    const cnt=[0,0,0,0,0,0],sr=[0,0,0,0,0,0],sg=[0,0,0,0,0,0],sb=[0,0,0,0,0,0],sm=[0,0,0,0,0,0];
+    if(!hidBuf||hidBuf.width!==w||hidBuf.height!==h)hidBuf=lctx.createImageData(w,h);
+    if(showParts&&(!pidBuf||pidBuf.width!==w||pidBuf.height!==h))pidBuf=pctx.createImageData(w,h);
+    const hid=hidBuf,hd=hid.data,pid=showParts?pidBuf:null;
+    const [r,g,b]=colorIdx!==null?rgb(COLORS[colorIdx].c):[0,0,0];
+    for(let i=0,j=0;i<n;i++,j+=4){
+      const fv=f[i];if(fv>mx)mx=fv;const c=fv<6?fv:5;cnt[c]++;
+      if(c>0&&(i&3)===0){const x=((i%w)*sx)|0,y=(((i/w)|0)*sy)|0,k=(y*work.width+x)*4;sr[c]+=px[k];sg[c]+=px[k+1];sb[c]+=px[k+2];sm[c]++}
+      const s=smooth[i]=smooth[i]*.55+(c===1?.45:0);
+      const a=s<.25?0:Math.min(1,(s-.25)/.5);
+      hd[j]=r;hd[j+1]=g;hd[j+2]=b;hd[j+3]=a*255;
+      if(pid){if(c>0){const q=CLS_COL[c];pid.data[j]=q[0];pid.data[j+1]=q[1];pid.data[j+2]=q[2];pid.data[j+3]=115}else pid.data[j+3]=0}
+    }
+    lctx.putImageData(hid,0,0);
+    if(layerB.width!==w||layerB.height!==h){layerB.width=w;layerB.height=h}
+    lbctx.clearRect(0,0,w,h);lbctx.filter="blur(1.5px)";lbctx.drawImage(layer,0,0);lbctx.filter="none";layerReady=true;
+    if(pid){pctx.putImageData(pid,0,0);partsReady=true}
+    const avg=c=>sm[c]>8?[(sr[c]/sm[c])|0,(sg[c]/sm[c])|0,(sb[c]/sm[c])|0]:null;
+    let ls=0,ln=0;for(let k=0;k<px.length;k+=64){ls+=px[k]*.3+px[k+1]*.59+px[k+2]*.11;ln++}
+    scene={pct:cnt.map(v=>v/n),col:{1:avg(1),2:avg(2),3:avg(3),4:avg(4)},dbg:{del:segDel,w,h,mx,lum:Math.round(ls/Math.max(1,ln)),pct:cnt.map(v=>Math.round(v/n*100))}};
+    hairPct=scene.pct[1];segFailCnt=0;segErr="";segRuns++;
+    segGap=Math.min(400,Math.max(110,(performance.now()-t0)*2.5));
+    if(segRuns===1||segRuns%10===0){refreshBadge();renderScene()}
+  })}catch(e){
+    segFailCnt++;segErr=String((e&&e.message)||e).slice(0,60);
+    if(segFailCnt>=2&&segDel==="GPU"&&!segSwitching){segSwitching=true;segmenter=null;makeSegmenter("CPU").finally(()=>{segSwitching=false;segFailCnt=0;refreshBadge()})}
+    else if(segFailCnt%10===2)refreshBadge();
+  }
+}
+function paintHair(){
+  const L=lum(COLORS[colorIdx].c);
+  vctx.save();vctx.imageSmoothingEnabled=true;vctx.imageSmoothingQuality="high";
+  vctx.globalAlpha=Math.min(1,intensity);vctx.globalCompositeOperation="color";
+  vctx.drawImage(layerB,0,0,view.width,view.height);
+  if(L>.45){vctx.globalAlpha=Math.min(1,intensity*(L-.2));vctx.globalCompositeOperation="soft-light";vctx.drawImage(layerB,0,0,view.width,view.height)}
+  vctx.restore();
+}
+function frame(ts){
+  if(!running)return;
+  drawCover(vctx,cam,view.width,view.height);
+  const live=colorIdx!==null||showParts;
+  if((live||tab==="face")&&segmenter&&ts-lastSeg>(live?segGap:400)){lastSeg=ts;segment()}
+  if(colorIdx!==null&&layerReady)paintHair();
+  if(showParts&&partsReady)vctx.drawImage(parts,0,0,view.width,view.height);
+  requestAnimationFrame(frame);
+}
+
+/* ================= KAMERA VE MODELLER ================= */
+async function startCam(){
+  try{
+    setBadge(T().loadingAI);
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:1280},height:{ideal:720}},audio:false});
+    cam.srcObject=stream;await cam.play();
+  }catch(e){setBadge(T().camerr,4000);return}
+  running=true;$("cover").hidden=true;resize();requestAnimationFrame(frame);loadModels();
+}
+async function makeSegmenter(del){
+  try{
+    segmenter=await vision.ImageSegmenter.createFromOptions(fileset,{baseOptions:{modelAssetPath:SEG_URL,delegate:del},runningMode:"VIDEO",outputConfidenceMasks:false,outputCategoryMask:true});
+    segDel=del;segErr="";return true;
+  }catch(e){segmenter=null;segErr=String((e&&e.message)||e).slice(0,60);return false}
+}
+async function loadModels(){
+  if(modelsState!=="idle")return;modelsState="loading";setBadge(T().loadingAI);
+  const v="0.10.14",base=`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${v}`;
+  try{
+    vision=await import(base+"/vision_bundle.mjs");
+    fileset=await vision.FilesetResolver.forVisionTasks(base+"/wasm");
+    try{landmarker=await vision.FaceLandmarker.createFromOptions(fileset,{baseOptions:{modelAssetPath:LM_URL},runningMode:"IMAGE",numFaces:1})}catch(e){}
+    for(const d of(SEG_DELEGATE==="GPU"?["GPU","CPU"]:["CPU","GPU"])){if(await makeSegmenter(d))break}
+    modelsState=(landmarker||segmenter)?"ready":"fail";
+  }catch(e){modelsState="fail";segErr=String((e&&e.message)||e).slice(0,60)}
+  if(modelsState==="fail"&&++loadTries<3)setTimeout(()=>{modelsState="idle";loadModels()},4000);
+  refreshBadge();
+}
+const FACE={top:10,chin:152,cl:234,cr:454,jl:172,jr:397,fl:54,fr:284};
+const dist=(a,b,w,h)=>Math.hypot((a.x-b.x)*w,(a.y-b.y)*h);
+function classify(lm,w,h){
+  const L=dist(lm[FACE.top],lm[FACE.chin],w,h),cheek=dist(lm[FACE.cl],lm[FACE.cr],w,h),jaw=dist(lm[FACE.jl],lm[FACE.jr],w,h),fore=dist(lm[FACE.fl],lm[FACE.fr],w,h);
+  const lw=L/cheek,jc=jaw/cheek,fc=fore/cheek;
+  if(lw>1.48)return"oblong";
+  if(jc<.76&&fc>.82)return"heart";
+  if(lw<1.28)return jc>.88?"square":"round";
+  return jc>.9&&lw<1.38?"square":"oval";
+}
+async function analyze(){
+  if(!running){setBadge(T().needCam,2500);return}
+  if(!landmarker){setBadge(modelsState==="loading"?T().loadingAI:T().aiFail,3000);return}
+  const c=document.createElement("canvas");c.width=cam.videoWidth;c.height=cam.videoHeight;c.getContext("2d").drawImage(cam,0,0);
+  const res=landmarker.detect(c),sc=$("scan");
+  sc.classList.remove("run");void sc.offsetWidth;sc.classList.add("run");
+  await new Promise(r=>setTimeout(r,1700));sc.classList.remove("run");
+  if(!res.faceLandmarks.length){setBadge(T().noface,3500);speak(T().noface);return}
+  setShape(classify(res.faceLandmarks[0],c.width,c.height));
+}
+function setShape(k){
+  shape=k;tab="face";refreshBadge();rail();panel();
+  speak(T().shapeIs(SHAPES[k][lang],SHAPES[k]["d_"+lang]));
+}
+function photo(){
+  if(!running){setBadge(T().needCam,2500);return}
+  const b=$("cmpBefore"),a=$("cmpAfter");b.width=a.width=view.width;b.height=a.height=view.height;
+  drawCover(b.getContext("2d"),cam,b.width,b.height);a.getContext("2d").drawImage(view,0,0);
+  $("lbB").textContent=T().before;$("lbA").textContent=T().after;
+  $("cmpActions").innerHTML=`<button class="btn" data-act="save">${T().save}</button><button class="btn ghost" data-act="closecmp">${T().close}</button>`;
+  $("cmp").classList.add("on");setSplit(50);
+}
+function setSplit(p){p=Math.max(0,Math.min(100,p));$("cmpAfter").style.clipPath=`inset(0 0 0 ${p}%)`;$("hd").style.left=p+"%"}
+(function(){const c=$("cmp");let drag=false;const mv=e=>{const r=c.getBoundingClientRect();setSplit((e.clientX-r.left)/r.width*100)};
+  c.addEventListener("pointerdown",e=>{if(e.target.closest(".actions"))return;drag=true;mv(e)});
+  c.addEventListener("pointermove",e=>{if(drag)mv(e)});window.addEventListener("pointerup",()=>drag=false)})();
+function save(){
+  $("cmpAfter").toBlob(b=>{if(!b)return;const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="nova-mirror.png";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)},"image/png");
+}
+
+/* ================= ARAYÜZ ================= */
+function setBadge(text,ms){
+  const b=$("badge");clearTimeout(badgeTimer);b.hidden=!text;b.textContent=text||"";
+  if(ms)badgeTimer=setTimeout(refreshBadge,ms);
+}
+function refreshBadge(){
+  const t=T(),e=segErr?" ("+segErr+")":"",hairOn=colorIdx!==null&&running;
+  if(modelsState==="loading")setBadge(t.loadingAI);
+  else if(modelsState==="fail")setBadge(t.aiFail+e);
+  else if(hairOn&&!segmenter&&!segSwitching)setBadge(t.segFail+e);
+  else if(hairOn&&segmenter&&segFailCnt>=2)setBadge(t.segRun+e);
+  else if(hairOn&&segmenter&&hairPct>=0&&hairPct<.004)setBadge(t.nohair);
+  else if(shape)setBadge(`${t.shapeL}: ${SHAPES[shape][lang]}`);
+  else setBadge("");
+}
+function rail(){
+  $("rail").innerHTML=TABS.map(k=>`<button class="${k===tab?"on":""}" data-act="tab" data-v="${k}">${svg(k)}<span>${T().rail[k]}</span></button>`).join("");
+}
+function actions(){
+  const t=T();
+  $("actions").innerHTML=`<button class="btn" data-act="photo">${t.photo}</button><button class="btn ghost" data-act="mode">${mirrorMode?t.tryOn:t.mirrorOn}</button><button class="btn ghost round ${listening?"rec":""}" data-act="mic" aria-label="mic">${svg("mic")}</button>`;
+}
+function cover(){
+  const t=T();
+  $("cover").innerHTML=`<h2>${t.hi}</h2><p class="sub">${t.consent}</p><button class="btn" data-act="start">${t.start}</button><button class="btn ghost" data-act="mic">${svg("mic")} ${t.talk}</button>`;
+}
+function panel(){
+  const t=T(),p=$("panel");let h=`<h2>${t.title[tab]}</h2>`;
+  if(tab==="face"){
+    h+=`<p class="sub" id="sceneMsg"></p><div class="rows">${[["H",t.hairL],["S",t.skinL],["C",t.clothL]].map(([k,l])=>`<div class="srow"><i class="dot" id="sw${k}"></i><div><small>${l}</small><b id="tx${k}">–</b></div></div>`).join("")}</div><h3>${t.recC}</h3><div class="sw" id="recBox"></div><div class="chips"><button class="chip" data-act="parts">${showParts?t.hideParts:t.showParts}</button><button class="chip" data-act="analyze">${t.measure}</button></div>${shape?`<p class="sub">${t.shapeL}: ${SHAPES[shape][lang]}. ${SHAPES[shape]["d_"+lang]}</p>`:""}<p class="sub">${t.toneNote}</p><p class="sub" id="techLine" style="font-size:12px;word-break:break-all"></p>`;
+  }else if(tab==="color"){
+    h+=`<p class="sub">${t.colorHint}</p><div class="sw">${COLORS.map((c,i)=>`<button class="${i===colorIdx?"on":""}" style="background:${c.c}" data-act="color" data-v="${i}" aria-label="${c[lang]}"></button>`).join("")}<button class="nat ${colorIdx===null?"on":""}" data-act="color" data-v="none">${t.natural}</button></div><p class="sub">${colorIdx===null?"":COLORS[colorIdx][lang]}</p><label class="sub">${t.intensity}<input id="int" type="range" min="20" max="100" value="${Math.round(intensity*100)}"></label>`;
+  }else if(tab==="style"){
+    if(shape){const S=SHAPES[shape];h+=`<h3>${t.recFor}</h3><div class="row">${S["s_"+lang].map(s=>`<div class="card"><b>${s}</b><span class="tag">${S[lang]}</span></div>`).join("")}</div>`}
+    const all=Object.values(SHAPES).flatMap(S=>S["s_"+lang].map(n=>({n,sh:S[lang]})));
+    h+=`<h3>${t.catalog}</h3><div class="grid">${all.map(a=>`<div class="card"><b>${a.n}</b><span class="tag">${a.sh}</span></div>`).join("")}</div><p class="sub" style="margin-top:12px">${t.catNote}</p>`;
+  }else if(tab==="prod"){
+    const list=[...PRODUCTS].sort((a,b)=>(colorIdx!==null?(b.tag==="color")-(a.tag==="color"):0));
+    h+=`<p class="sub">${colorIdx!==null?t.prodHintC:t.prodHint}</p><div class="grid">${list.map(x=>`<div class="card"><b>${x[lang]}</b><span class="price">${eur(x.p)}</span></div>`).join("")}</div>`;
+  }else if(tab==="menu"){
+    h+=`<div class="grid">${SERVICES.map(s=>`<div class="card"><b>${s[lang]}</b><span class="price">${eur(s.p)}</span></div>`).join("")}</div>`;
+  }else{
+    h+=`<div id="chat"></div><div class="chips">${t.chips.map(c=>`<button class="chip" data-act="ask" data-v="${c}">${c}</button>`).join("")}</div><div class="send"><input id="inp" class="inp" placeholder="${t.ask}" autocomplete="off"><button class="btn" data-act="send" aria-label="send">&#10148;</button></div>`;
+  }
+  p.innerHTML=h;if(tab==="chat")renderChat();if(tab==="face")renderScene();
+}
+function hslOf(c){
+  const r=c[0]/255,g=c[1]/255,b=c[2]/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2;let h=0,s=0;
+  if(mx!==mn){const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);h=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4;h*=60}
+  return[h,s,l];
+}
+function colorName(c){
+  const[h,s,l]=hslOf(c);
+  const N=lang==="de"?["Schwarz","Weiß","Grau","Braun","Rot","Orange","Gelb","Grün","Türkis","Blau","Lila","Rosa","dunkel","hell"]:["Siyah","Beyaz","Gri","Kahverengi","Kırmızı","Turuncu","Sarı","Yeşil","Turkuaz","Mavi","Mor","Pembe","koyu","açık"];
+  const[bk,wh,gy,br,rd,or,ye,gr,cy,bl,pu,pk,dk,lt]=N;
+  if(l<.1)return bk;if(l>.92)return wh;
+  let n;
+  if(s<.14)n=gy;
+  else if(h<15||h>=345)n=l<.3?br:rd;
+  else if(h<45)n=l<.55?br:or;
+  else if(h<70)n=l<.45?br:ye;
+  else if(h<165)n=gr;else if(h<200)n=cy;else if(h<255)n=bl;else if(h<290)n=pu;else n=pk;
+  const pre=n===br?(l<.2?dk:l>.5?lt:""):(l<.3?dk:l>.7?lt:"");
+  return pre?`${n} (${pre})`:n;
+}
+function renderScene(){
+  const t=T(),msg=$("sceneMsg");if(!msg)return;
+  const rb=$("recBox"),dbg=$("techLine");
+  if(dbg){const d=scene&&scene.dbg;dbg.textContent=d?`Teknik: ${d.del} · maske ${d.w}×${d.h} · en büyük değer ${d.mx} · sınıflar ${d.pct.join("/")} · parlaklık ${d.lum} · çalışma ${segRuns}`:`Teknik: model ${segmenter?"hazır ("+segDel+")":"yok"} · çalışma ${segRuns}${segErr?" · "+segErr:""}`}
+  const set=(k,col,text)=>{const sw=$("sw"+k),tx=$("tx"+k);if(!sw||!tx)return;
+    if(col){sw.style.background=`rgb(${col[0]},${col[1]},${col[2]})`;tx.textContent=text||colorName(col)}
+    else{sw.style.background="transparent";tx.textContent="–"}};
+  if(!scene||scene.pct[1]+scene.pct[2]+scene.pct[3]+scene.pct[4]<.02){
+    msg.textContent=scene?t.noPerson:(running?t.lookingAt:t.sceneHint);
+    set("H",null);set("S",null);set("C",null);
+    if(rb&&rb.dataset.k){rb.innerHTML="";rb.dataset.k=""}
+    return;
+  }
+  msg.textContent="";
+  const p=scene.pct,sk=scene.col[3]||scene.col[2];
+  set("H",p[1]>.01?scene.col[1]:null,`${p[1]>.01&&scene.col[1]?colorName(scene.col[1]):""} · %${Math.round(p[1]*100)}`);
+  let tone="neutral";
+  if(sk){const hh=hslOf(sk)[0];tone=hh>=26?"warm":hh<=14?"cool":"neutral"}
+  const lv=sk?hslOf(sk)[2]:0;
+  set("S",sk,sk?`${t.skinLv[lv>.62?0:lv>.38?1:2]} · ${t[tone]}`:"");
+  set("C",scene.col[4]);
+  if(rb&&rb.dataset.k!==tone){
+    const idx={warm:[3,5,2,1],cool:[4,8,6,9],neutral:[1,2,6,3]}[tone];
+    rb.innerHTML=idx.map(i=>`<button style="background:${COLORS[i].c}" data-act="rec" data-v="${i}" aria-label="${COLORS[i][lang]}"></button>`).join("");
+    rb.dataset.k=tone;
+  }
+}
+function toggleMode(){
+  mirrorMode=!mirrorMode;
+  $("stage").classList.toggle("mirror",mirrorMode);document.body.classList.toggle("mirror",mirrorMode);
+  actions();setBadge(mirrorMode?T().mirrorNote:T().tryNote,4500);
+}
+function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function renderChat(){
+  const box=$("chat");if(!box)return;
+  if(!chatLog.length)chatLog.push({n:1,t:T().hello});
+  box.innerHTML=chatLog.map(m=>`<div class="msg ${m.n?"n":"u"}">${esc(m.t)}</div>`).join("");box.scrollTop=box.scrollHeight;
+}
+function setLang(l){
+  lang=l;document.documentElement.lang=l;
+  $("l-tr").classList.toggle("on",l==="tr");$("l-de").classList.toggle("on",l==="de");
+  rail();actions();cover();panel();clock();refreshBadge();$("adTap").textContent=T().tap;
+  if(rec)rec.lang=T().speech;
+}
+function clock(){
+  const d=new Date(),loc=lang==="de"?"de-DE":"tr-TR";
+  $("clk").textContent=d.toLocaleTimeString(loc,{hour:"2-digit",minute:"2-digit"});
+  $("dt").textContent=d.toLocaleDateString(loc,{weekday:"long",day:"numeric",month:"long"});
+}
+
+/* ================= SES VE SOHBET ================= */
+function speak(text){
+  if(!("speechSynthesis" in window))return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);u.lang=T().speech;
+  const v=speechSynthesis.getVoices().find(x=>x.lang.startsWith(T().speech.slice(0,2)));if(v)u.voice=v;
+  speechSynthesis.speak(u);
+}
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+function toggleMic(){
+  if(!SR){setBadge(T().nomic,3500);return}
+  if(listening){rec.stop();return}
+  if(tab!=="chat"){tab="chat";rail();panel()}
+  speechSynthesis.cancel();
+  rec=new SR();rec.lang=T().speech;rec.interimResults=false;rec.maxAlternatives=1;
+  rec.onstart=()=>{listening=true;setBadge(T().listening);actions()};
+  rec.onend=()=>{listening=false;refreshBadge();actions()};
+  rec.onerror=()=>{};
+  rec.onresult=e=>ask(e.results[0][0].transcript);
+  rec.start();
+}
+async function brain(q){
+  if(AI_ENDPOINT){
+    try{const r=await fetch(AI_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({lang,message:q,faceShape:shape})});const j=await r.json();if(j.reply)return j.reply}catch(e){}
+  }
+  const k=T().kw,s=q.toLowerCase();
+  if(k.thanks.test(s))return T().thanks;
+  if(k.price.test(s))return T().price+SERVICES.slice(0,5).map(x=>`${x[lang]} ${eur(x.p)}`).join(", ")+".";
+  if(k.color.test(s))return T().colors(COLORS.map(c=>c[lang]).join(", "));
+  if(k.style.test(s))return shape?T().sugg(SHAPES[shape]["s_"+lang].slice(0,3).join(", ")):T().askFace;
+  if(k.hello.test(s))return T().hello;
+  return T().fallback;
+}
+async function ask(q){
+  q=(q||"").trim();if(!q)return;
+  if(tab!=="chat"){tab="chat";rail();panel()}
+  chatLog.push({n:0,t:q});renderChat();
+  const a=await brain(q);chatLog.push({n:1,t:a});renderChat();speak(a);
+  const i=$("inp");if(i)i.value="";
+}
+
+/* ================= OLAYLAR ================= */
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-act]");if(!b)return;
+  const a=b.dataset.act,v=b.dataset.v;
+  if(a==="lang")setLang(v);
+  else if(a==="tab"){tab=v;rail();panel()}
+  else if(a==="start")startCam();
+  else if(a==="analyze")analyze();
+  else if(a==="photo")photo();
+  else if(a==="mode")toggleMode();
+  else if(a==="parts"){showParts=!showParts;partsReady=false;panel()}
+  else if(a==="rec"){colorIdx=+v;layerReady=false;hairPct=-1;if(!running)setBadge(T().needCam,2500);else{loadModels();refreshBadge()}panel()}
+  else if(a==="mic")toggleMic();
+  else if(a==="shape")setShape(v);
+  else if(a==="again"){shape=null;refreshBadge();panel()}
+  else if(a==="color"){
+    colorIdx=v==="none"?null:+v;layerReady=false;hairPct=-1;
+    if(colorIdx!==null){if(!running)setBadge(T().needCam,2500);else{loadModels();refreshBadge()}}
+    else refreshBadge();
+    panel();
+  }
+  else if(a==="ask")ask(v);
+  else if(a==="send")ask($("inp").value);
+  else if(a==="closecmp")$("cmp").classList.remove("on");
+  else if(a==="save")save();
+});
+document.addEventListener("input",e=>{if(e.target.id==="int")intensity=e.target.value/100});
+document.addEventListener("keydown",e=>{if(e.target.id==="inp"&&e.key==="Enter")ask(e.target.value)});
+
+/* ================= REKLAM EKRANI ================= */
+const atr=$("attract");
+function adTick(){
+  if(!atr.classList.contains("on"))return;
+  const L=ADS[lang];adIdx=(adIdx+1)%L.length;$("adMsg").textContent=L[adIdx];
+}
+function showAttract(){
+  atr.classList.add("on");adIdx=0;$("adMsg").textContent=ADS[lang][0];$("adTap").textContent=T().tap;
+  const v=$("adVid");if(ADS.video){v.src=ADS.video;v.hidden=false;v.play().catch(()=>{})}
+}
+function touch(){lastTouch=Date.now()}
+["pointerdown","pointermove","keydown"].forEach(n=>window.addEventListener(n,touch,{passive:true}));
+atr.addEventListener("pointerdown",()=>{atr.classList.remove("on");$("adVid").pause();touch()});
+setInterval(()=>{
+  clock();
+  if(!atr.classList.contains("on")&&!listening&&!$("cmp").classList.contains("on")&&Date.now()-lastTouch>IDLE_MS)showAttract();
+},1000);
+setInterval(adTick,5000);
+setInterval(()=>{if(tab==="face")renderScene()},1500);
+
+/* ================= BAŞLAT ================= */
+if("speechSynthesis" in window)speechSynthesis.getVoices();
+resize();setLang("tr");
+</script>
+<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(function(){})</script></body>
+</html>
