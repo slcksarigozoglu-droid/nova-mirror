@@ -119,6 +119,15 @@ body.mirror{background:#000}
 .own.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
 .own input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
 .cur{font:600 15px var(--font);letter-spacing:.14em;text-transform:uppercase;color:var(--gold2);margin:8px 2px 2px}
+
+.cat{grid-template-columns:repeat(auto-fill,minmax(72px,1fr))!important;gap:8px!important}
+.cc{padding:0 0 6px!important;gap:5px!important;border-radius:12px!important;background:transparent!important;border:1px solid transparent!important}
+.cc.on{border-color:var(--gold)!important;box-shadow:0 0 0 1px var(--gold),0 6px 18px rgba(216,184,121,.3)!important}
+.tile{position:relative;display:block;width:100%;aspect-ratio:1;border-radius:11px 11px 8px 8px;overflow:hidden;box-shadow:0 4px 10px rgba(0,0,0,.4)}
+.tile img{width:100%;height:100%;display:block;object-fit:cover}
+.num{position:absolute;right:6px;bottom:4px;font:600 11.5px var(--font);font-style:normal;letter-spacing:.04em;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.75)}
+.cc b{font:500 10.5px var(--font)!important;line-height:1.15;padding:0 3px;max-width:100%}
+.cc.rec{min-width:78px;width:78px}
 </style>
 <link rel="manifest" href="manifest.json"><meta name="theme-color" content="#050b18"><link rel="icon" href="icon-192.png"><meta name="mobile-web-app-capable" content="yes"></head>
 <body>
@@ -218,6 +227,39 @@ const COLORS=[
 const CUSTOM_IDX=COLORS.length-1;
 const FAMS=[["all","Tümü","Alle"],["k","Siyah","Schwarz"],["b","Kahve","Braun"],["r","Kızıl & Kırmızı","Rot & Kupfer"],["s","Sarı","Blond"],["g","Gri","Grau"],["f","Fantezi","Fantasie"]];
 let colFam="all";
+
+/* Saç tutamı dokusu: her renk için uygulamanın kendi ürettiği küçük görsel */
+const tressCache={};
+function mulberry(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function tressURL(i,hex){
+  hex=hex||COLORS[i].c;const key=i+hex;if(tressCache[key])return tressCache[key];
+  const N=104,cv=document.createElement("canvas");cv.width=cv.height=N;const x=cv.getContext("2d"),R=mulberry(i*977+13),[r,g,b]=rgb(hex);
+  const mix=(f)=>{const t=Math.abs(f),tr=f>0?255:0;return`rgb(${Math.round(r+(tr-r)*t)},${Math.round(g+(tr-g)*t)},${Math.round(b+(tr-b)*t)})`};
+  const bg=x.createLinearGradient(0,0,N,N);bg.addColorStop(0,mix(-.18));bg.addColorStop(.5,mix(.04));bg.addColorStop(1,mix(-.28));x.fillStyle=bg;x.fillRect(0,0,N,N);
+  x.lineCap="round";
+  for(let k=0;k<95;k++){
+    const x0=R()*N*1.5-N*.25,amp=10+R()*22,ph=R()*6.28,w=.6+R()*2.4,f=(R()-.5)*(R()<.4?.7:.38);
+    x.beginPath();x.lineWidth=w;x.strokeStyle=mix(f);x.globalAlpha=.3+R()*.5;
+    for(let y=-6;y<=N+6;y+=6){const xx=x0+Math.sin(y/(N/2.6)+ph)*amp+y*.35;y===-6?x.moveTo(xx,y):x.lineTo(xx,y)}
+    x.stroke();
+  }
+  x.globalAlpha=1;x.globalCompositeOperation="soft-light";
+  for(let k=0;k<3;k++){const gx=N*(.15+R()*.7),gr=x.createLinearGradient(gx-14,0,gx+14,N*.9);gr.addColorStop(0,"rgba(255,255,255,0)");gr.addColorStop(.5,"rgba(255,255,255,.55)");gr.addColorStop(1,"rgba(255,255,255,0)");x.fillStyle=gr;x.save();x.translate(0,0);x.transform(1,0,-.35,1,N*.1,0);x.fillRect(gx-12,0,24,N);x.restore()}
+  x.globalCompositeOperation="source-over";
+  const vg=x.createRadialGradient(N/2,N/2,N*.25,N/2,N/2,N*.75);vg.addColorStop(0,"rgba(0,0,0,0)");vg.addColorStop(1,"rgba(0,0,0,.35)");x.fillStyle=vg;x.fillRect(0,0,N,N);
+  return tressCache[key]=cv.toDataURL("image/jpeg",.82);
+}
+/* Profesyonel boya kataloğundaki gibi seviye.ton numarası (örn. 4.3) */
+function dyeCode(i){
+  const [r,g,b]=rgb(COLORS[i].c),mx=Math.max(r,g,b)/255,mn=Math.min(r,g,b)/255,l=(mx+mn)/2,d=mx-mn;
+  const sat=d===0?0:d/(1-Math.abs(2*l-1));let h=0;
+  if(d){const R=r/255,G=g/255,B=b/255;h=mx===R?((G-B)/d)%6:mx===G?(B-R)/d+2:(R-G)/d+4;h=(h*60+360)%360}
+  const lv=Math.max(1,Math.min(10,Math.round(lum(COLORS[i].c)*11)));
+  let t=0;
+  if(COLORS[i].g==="g")t=1;
+  else if(sat>.2){ if(h>=160&&h<270)t=8; else if(h>=270&&h<335)t=7; else if(h>=335||h<12)t=6; else if(h<24&&sat>.5)t=4; else if(h<52)t=3; }
+  return lv+"."+t;
+}
 const PRODUCTS=[
  {tr:"Renk koruyucu şampuan",de:"Farbschutz-Shampoo",p:18,tag:"color"},{tr:"Renk koruyucu maske",de:"Farbschutz-Maske",p:24,tag:"color"},
  {tr:"Onarıcı saç serumu",de:"Reparatur-Haarserum",p:22,tag:"care"},{tr:"Isı koruyucu sprey",de:"Hitzeschutz-Spray",p:16,tag:"care"},
@@ -496,7 +538,7 @@ function panel(){
     const cur=colorIdx===null?"":COLORS[colorIdx][lang];
     h+=`<p class="sub">${t.colorHint}</p>
 <div class="fams">${FAMS.map(f=>`<button class="fam ${colFam===f[0]?"on":""}" data-act="fam" data-v="${f[0]}">${lang==="de"?f[2]:f[1]}</button>`).join("")}</div>
-<div class="cat">${list.map(o=>`<button class="cc ${o.i===colorIdx?"on":""}" style="--c:${o.c.c}" data-act="color" data-v="${o.i}"><span class="tress"></span><b>${o.c[lang]}</b><small>N° ${String(o.i+1).padStart(2,"0")}</small></button>`).join("")}</div>
+<div class="cat">${list.map(o=>`<button class="cc ${o.i===colorIdx?"on":""}" data-act="color" data-v="${o.i}"><span class="tile"><img src="${tressURL(o.i)}" alt=""><i class="num">${dyeCode(o.i)}</i></span><b>${o.c[lang]}</b></button>`).join("")}</div>
 <div class="tools"><button class="nat ${colorIdx===null?"on":""}" data-act="color" data-v="none">${t.natural}</button>
 <label class="own ${colorIdx===CUSTOM_IDX?"on":""}"><span class="tress sm" style="--c:${COLORS[CUSTOM_IDX].c}"></span>${lang==="de"?"Eigene Farbe wählen":"Özel renk seç"}<input id="cc" type="color" value="${COLORS[CUSTOM_IDX].c}"></label></div>
 <p class="cur">${cur}</p><label class="sub">${t.intensity}<input id="int" type="range" min="20" max="100" value="${Math.round(intensity*100)}"></label>`;
@@ -556,7 +598,7 @@ function renderScene(){
   set("C",scene.col[4]);
   if(rb&&rb.dataset.k!==tone){
     const idx={warm:[3,5,2,1],cool:[4,8,6,9],neutral:[1,2,6,3]}[tone];
-    rb.innerHTML=idx.map(i=>`<button class="cc rec" style="--c:${COLORS[i].c}" data-act="rec" data-v="${i}"><span class="tress"></span><b>${COLORS[i][lang]}</b></button>`).join("");
+    rb.innerHTML=idx.map(i=>`<button class="cc rec" data-act="rec" data-v="${i}"><span class="tile"><img src="${tressURL(i)}" alt=""><i class="num">${dyeCode(i)}</i></span><b>${COLORS[i][lang]}</b></button>`).join("");
     rb.dataset.k=tone;
   }
 }
