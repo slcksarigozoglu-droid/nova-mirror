@@ -128,10 +128,27 @@ body.mirror{background:#000}
 .num{position:absolute;right:6px;bottom:4px;font:600 11.5px var(--font);font-style:normal;letter-spacing:.04em;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.75)}
 .cc b{font:500 10.5px var(--font)!important;line-height:1.15;padding:0 3px;max-width:100%}
 .cc.rec{min-width:78px;width:78px}
+
+.tw{display:block;width:80%;margin:0 auto;filter:drop-shadow(0 5px 6px rgba(0,0,0,.45))}
+.tile{aspect-ratio:50/62!important;border-radius:0!important;box-shadow:none!important;clip-path:url(#swatchClip);overflow:hidden}
+.tile .fold{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.num{left:0!important;right:0!important;bottom:7%!important;text-align:center}
+.cc.rec{width:72px;min-width:72px}
+
+/* AYNA MODU: gerçek çift yönlü ayna camı için. Siyah = ışık yok = ayna görünür. Menüler şeffaf, sadece ince çizgi ve yazı ışık verir. */
+body.mirror{background:#000!important}
+body.mirror .stage{border:0!important;box-shadow:none!important;background:#000!important;border-radius:0!important}
+body.mirror .cover{background:transparent!important}
+body.mirror .panel,body.mirror .card,body.mirror .cc,body.mirror .fam,body.mirror .btn,body.mirror .btn.ghost,body.mirror .rail button,body.mirror .badge,body.mirror .nat,body.mirror .own,body.mirror .srow,body.mirror .tools .nat{background:transparent!important;background-image:none!important;border:1px solid rgba(255,255,255,.3)!important;box-shadow:none!important;color:#fff}
+body.mirror .fam.on,body.mirror .cc.on,body.mirror .nat.on,body.mirror .own.on,body.mirror .rail button.on{border-color:#f3e2b8!important;box-shadow:0 0 0 1px #f3e2b8!important}
+body.mirror .fam.on{color:#f3e2b8}
+body.mirror .tw{filter:none}
+body.mirror .lang button{background:transparent!important;background-image:none!important;border:1px solid rgba(255,255,255,.3)!important;color:#fff}
+body.mirror .lang button.on{border-color:#f3e2b8!important;color:#f3e2b8}
 </style>
 <link rel="manifest" href="manifest.json"><meta name="theme-color" content="#050b18"><link rel="icon" href="icon-192.png"><meta name="mobile-web-app-capable" content="yes"></head>
 <body>
-<div id="app">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><clipPath id="swatchClip" clipPathUnits="objectBoundingBox"><path transform="scale(0.02 0.016129)" d="M16 5 L 25 15 L 34 5 C 43 11, 48 24, 45 40 C 42 54, 34 60, 25 61 C 16 60, 8 54, 5 40 C 2 24, 7 11, 16 5 Z"/></clipPath></defs></svg><div id="app">
   <header class="top">
     <div class="logo"><b>N<span class="o"></span>VA</b><i>MIRROR</i></div>
     <div class="clock"><b id="clk"></b><small id="dt"></small></div>
@@ -538,7 +555,7 @@ function panel(){
     const cur=colorIdx===null?"":COLORS[colorIdx][lang];
     h+=`<p class="sub">${t.colorHint}</p>
 <div class="fams">${FAMS.map(f=>`<button class="fam ${colFam===f[0]?"on":""}" data-act="fam" data-v="${f[0]}">${lang==="de"?f[2]:f[1]}</button>`).join("")}</div>
-<div class="cat">${list.map(o=>`<button class="cc ${o.i===colorIdx?"on":""}" data-act="color" data-v="${o.i}"><span class="tile"><img src="${tressURL(o.i)}" alt=""><i class="num">${dyeCode(o.i)}</i></span><b>${o.c[lang]}</b></button>`).join("")}</div>
+<div class="cat">${list.map(o=>`<button class="cc ${o.i===colorIdx?"on":""}" data-act="color" data-v="${o.i}"><span class="tw"><span class="tile"><img src="${tressURL(o.i)}" alt=""><svg class="fold" viewBox="0 0 50 62" preserveAspectRatio="none"><path d="M16 5 C 28 13, 35 30, 36 54" fill="none" stroke="rgba(0,0,0,.28)" stroke-width="1.5"/><path d="M17.4 6.4 C 29 14.5, 36.4 31, 37.4 54" fill="none" stroke="rgba(255,255,255,.36)" stroke-width="1"/><path d="M16 5 C 28 13, 35 30, 36 54 C 30 60, 25 61, 25 61 C 16 60, 8 54, 5 40 C 2 24, 7 11, 16 5 Z" fill="rgba(255,255,255,.07)"/><path d="M34 5 C 43 11, 48 24, 45 40 C 42 54, 34 60, 27 61 C 37 56, 38 20, 34 5 Z" fill="rgba(0,0,0,.14)"/></svg><i class="num">${dyeCode(o.i)}</i></span></span><b>${o.c[lang]}</b></button>`).join("")}</div>
 <div class="tools"><button class="nat ${colorIdx===null?"on":""}" data-act="color" data-v="none">${t.natural}</button>
 <label class="own ${colorIdx===CUSTOM_IDX?"on":""}"><span class="tress sm" style="--c:${COLORS[CUSTOM_IDX].c}"></span>${lang==="de"?"Eigene Farbe wählen":"Özel renk seç"}<input id="cc" type="color" value="${COLORS[CUSTOM_IDX].c}"></label></div>
 <p class="cur">${cur}</p><label class="sub">${t.intensity}<input id="int" type="range" min="20" max="100" value="${Math.round(intensity*100)}"></label>`;
@@ -598,7 +615,7 @@ function renderScene(){
   set("C",scene.col[4]);
   if(rb&&rb.dataset.k!==tone){
     const idx={warm:[3,5,2,1],cool:[4,8,6,9],neutral:[1,2,6,3]}[tone];
-    rb.innerHTML=idx.map(i=>`<button class="cc rec" data-act="rec" data-v="${i}"><span class="tile"><img src="${tressURL(i)}" alt=""><i class="num">${dyeCode(i)}</i></span><b>${COLORS[i][lang]}</b></button>`).join("");
+    rb.innerHTML=idx.map(i=>`<button class="cc rec" data-act="rec" data-v="${i}"><span class="tw"><span class="tile"><img src="${tressURL(i)}" alt=""><svg class="fold" viewBox="0 0 50 62" preserveAspectRatio="none"><path d="M16 5 C 28 13, 35 30, 36 54" fill="none" stroke="rgba(0,0,0,.28)" stroke-width="1.5"/><path d="M17.4 6.4 C 29 14.5, 36.4 31, 37.4 54" fill="none" stroke="rgba(255,255,255,.36)" stroke-width="1"/><path d="M16 5 C 28 13, 35 30, 36 54 C 30 60, 25 61, 25 61 C 16 60, 8 54, 5 40 C 2 24, 7 11, 16 5 Z" fill="rgba(255,255,255,.07)"/><path d="M34 5 C 43 11, 48 24, 45 40 C 42 54, 34 60, 27 61 C 37 56, 38 20, 34 5 Z" fill="rgba(0,0,0,.14)"/></svg><i class="num">${dyeCode(i)}</i></span></span><b>${COLORS[i][lang]}</b></button>`).join("");
     rb.dataset.k=tone;
   }
 }
